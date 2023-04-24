@@ -42,6 +42,7 @@ spec:
               image:
                 type: string
               port:
+                format: int32
                 type: integer
             type: object
           status:
