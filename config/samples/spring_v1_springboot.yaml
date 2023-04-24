@@ -10,3 +10,5 @@ metadata:
   name: springboot-sample
 spec:
   # TODO(user): Add fields here
+  image:  ninrod/springboot:test
+  port:  8080

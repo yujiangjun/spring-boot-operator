@@ -18,18 +18,22 @@ package controllers
 
 import (
 	"context"
+	"github.com/go-logr/logr"
+	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-
 	springv1 "yujiangjun/spring-boot-controller/api/v1"
 )
 
 // SpringBootReconciler reconciles a SpringBoot object
 type SpringBootReconciler struct {
 	client.Client
+	Log    logr.Logger
 	Scheme *runtime.Scheme
 }
 
@@ -48,7 +52,53 @@ type SpringBootReconciler struct {
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.14.1/pkg/reconcile
 func (r *SpringBootReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	_ = log.FromContext(ctx)
+	logger := r.Log.WithValues("springBootController", req.Namespace)
 
+	c := r.Client
+
+	boot := &springv1.SpringBoot{}
+
+	err := r.Get(ctx, req.NamespacedName, boot)
+	if err != nil {
+		logger.Info(req.NamespacedName.Name, "is Delete")
+		return reconcile.Result{}, nil
+	}
+
+	name := boot.GetObjectMeta().GetName()
+
+	lables := map[string]string{
+		"app": name,
+	}
+
+	meta := metav1.ObjectMeta{
+		Name:      name,
+		Namespace: req.Namespace,
+		Labels:    lables,
+	}
+
+	typeMeta := metav1.TypeMeta{
+		Kind:       "Pod",
+		APIVersion: "v1",
+	}
+	pod := &v1.Pod{
+		TypeMeta:   typeMeta,
+		ObjectMeta: meta,
+		Spec: v1.PodSpec{
+			Containers: []v1.Container{
+				{
+					Name:  boot.Name + "-pod",
+					Image: boot.Spec.Image,
+					Ports: []v1.ContainerPort{{
+						ContainerPort: boot.Spec.Port,
+					}},
+				},
+			},
+		},
+	}
+	err = c.Create(ctx, pod)
+	if err != nil {
+		logger.Info("pod create err")
+	}
 	// TODO(user): your logic here
 
 	return ctrl.Result{}, nil
