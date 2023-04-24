@@ -1,5 +1,6 @@
 # Build the manager binary
 FROM golang:1.19 as builder
+ENV GOPROXY https://goproxy.cn
 ARG TARGETOS
 ARG TARGETARCH
 
