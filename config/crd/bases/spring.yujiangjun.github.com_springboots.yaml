@@ -39,6 +39,10 @@ spec:
                 description: Foo is an example field of SpringBoot. Edit springboot_types.go
                   to remove/update
                 type: string
+              image:
+                type: string
+              port:
+                type: integer
             type: object
           status:
             description: SpringBootStatus defines the observed state of SpringBoot
