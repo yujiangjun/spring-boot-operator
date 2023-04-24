@@ -21,6 +21,7 @@ import (
 	"github.com/go-logr/logr"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	"k8s.io/apimachinery/pkg/runtime"
@@ -51,8 +52,7 @@ type SpringBootReconciler struct {
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.14.1/pkg/reconcile
 func (r *SpringBootReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	_ = log.FromContext(ctx)
-	logger := r.Log.WithValues("springBootController", req.Namespace)
+	logger := log.FromContext(ctx)
 
 	c := r.Client
 
@@ -64,6 +64,7 @@ func (r *SpringBootReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return reconcile.Result{}, nil
 	}
 
+	logger.Info("image================:" + boot.Spec.Image)
 	name := boot.GetObjectMeta().GetName()
 
 	lables := map[string]string{
@@ -71,7 +72,7 @@ func (r *SpringBootReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	}
 
 	meta := metav1.ObjectMeta{
-		Name:      name,
+		Name:      name + "-pod",
 		Namespace: req.Namespace,
 		Labels:    lables,
 	}
@@ -86,19 +87,25 @@ func (r *SpringBootReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		Spec: v1.PodSpec{
 			Containers: []v1.Container{
 				{
-					Name:  boot.Name + "-pod",
+					Name:  boot.Name + "-c",
 					Image: boot.Spec.Image,
-					Ports: []v1.ContainerPort{{
-						ContainerPort: boot.Spec.Port,
-					}},
+					//Ports: []v1.ContainerPort{{
+					//	ContainerPort: boot.Spec.Port,
+					//}},
 				},
 			},
 		},
+	}
+	err = controllerutil.SetControllerReference(boot, pod, r.Scheme)
+	if err != nil {
+		logger.Info("绑定owner发生了错误")
+		return ctrl.Result{}, err
 	}
 	err = c.Create(ctx, pod)
 	if err != nil {
 		logger.Info("pod create err")
 	}
+
 	// TODO(user): your logic here
 
 	return ctrl.Result{}, nil
