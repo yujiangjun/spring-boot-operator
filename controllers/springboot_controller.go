@@ -60,21 +60,57 @@ func (r *SpringBootReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 
 	err := r.Get(ctx, req.NamespacedName, boot)
 	if err != nil {
-		logger.Info(req.NamespacedName.Name, "is Delete")
+		logger.Info("" + req.NamespacedName.Name + "is Delete")
 		return reconcile.Result{}, nil
 	}
 
 	logger.Info("image================:" + boot.Spec.Image)
 	name := boot.GetObjectMeta().GetName()
 
-	lables := map[string]string{
+	labels := map[string]string{
 		"app": name,
 	}
 
-	meta := metav1.ObjectMeta{
+	podObjMeta := metav1.ObjectMeta{
 		Name:      name + "-pod",
 		Namespace: req.Namespace,
-		Labels:    lables,
+		Labels:    labels,
+	}
+
+	serviceTypeMeta := metav1.TypeMeta{
+		Kind:       "Service",
+		APIVersion: "v1",
+	}
+	serviceObjMeta := metav1.ObjectMeta{
+		Name:      boot.Name + "-svc",
+		Namespace: boot.Namespace,
+		Labels:    labels,
+	}
+	service := &v1.Service{
+		TypeMeta:   serviceTypeMeta,
+		ObjectMeta: serviceObjMeta,
+		Spec: v1.ServiceSpec{
+			Type: v1.ServiceTypeNodePort,
+			Ports: []v1.ServicePort{{
+				Port: 80,
+			}},
+			Selector: labels,
+		},
+	}
+
+	err = controllerutil.SetControllerReference(boot, service, r.Scheme)
+	if err != nil {
+		logger.Info("service set reference occur error", service.ObjectMeta.Name)
+		return ctrl.Result{}, err
+	}
+
+	// 创建service
+	_, err = controllerutil.CreateOrUpdate(ctx, c, service, func() error {
+		return nil
+	})
+	if err != nil {
+		logger.Info("service 发生了错误")
+		return ctrl.Result{}, nil
 	}
 
 	typeMeta := metav1.TypeMeta{
@@ -83,7 +119,7 @@ func (r *SpringBootReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	}
 	pod := &v1.Pod{
 		TypeMeta:   typeMeta,
-		ObjectMeta: meta,
+		ObjectMeta: podObjMeta,
 		Spec: v1.PodSpec{
 			Containers: []v1.Container{
 				{
@@ -101,6 +137,7 @@ func (r *SpringBootReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		logger.Info("绑定owner发生了错误")
 		return ctrl.Result{}, err
 	}
+	// 创建pod
 	err = c.Create(ctx, pod)
 	if err != nil {
 		logger.Info("pod create err")
