@@ -29,7 +29,9 @@ type SpringBootSpec struct {
 	// Important: Run "make" to regenerate code after modifying this file
 
 	// Foo is an example field of SpringBoot. Edit springboot_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	Foo   string `json:"foo,omitempty"`
+	Image string `json:"image,omitempty"`
+	Port  int16  `json:"port,omitempty"`
 }
 
 // SpringBootStatus defines the observed state of SpringBoot
