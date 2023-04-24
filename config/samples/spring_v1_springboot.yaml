@@ -1,0 +1,12 @@
+apiVersion: spring.yujiangjun.github.com/v1
+kind: SpringBoot
+metadata:
+  labels:
+    app.kubernetes.io/name: springboot
+    app.kubernetes.io/instance: springboot-sample
+    app.kubernetes.io/part-of: spring-boot-operator-demo
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: spring-boot-operator-demo
+  name: springboot-sample
+spec:
+  # TODO(user): Add fields here

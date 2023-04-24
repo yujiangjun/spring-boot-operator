@@ -1,0 +1,33 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  name: manager-role
+rules:
+- apiGroups:
+  - spring.yujiangjun.github.com
+  resources:
+  - springboots
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - spring.yujiangjun.github.com
+  resources:
+  - springboots/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - spring.yujiangjun.github.com
+  resources:
+  - springboots/status
+  verbs:
+  - get
+  - patch
+  - update

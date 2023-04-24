@@ -1,0 +1,27 @@
+# permissions for end users to view springboots.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/name: clusterrole
+    app.kubernetes.io/instance: springboot-viewer-role
+    app.kubernetes.io/component: rbac
+    app.kubernetes.io/created-by: spring-boot-operator-demo
+    app.kubernetes.io/part-of: spring-boot-operator-demo
+    app.kubernetes.io/managed-by: kustomize
+  name: springboot-viewer-role
+rules:
+- apiGroups:
+  - spring.yujiangjun.github.com
+  resources:
+  - springboots
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - spring.yujiangjun.github.com
+  resources:
+  - springboots/status
+  verbs:
+  - get
